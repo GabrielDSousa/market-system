@@ -1,6 +1,6 @@
 <?php
 
-require("ApiResponse.php");
+require "app/requests/ApiResponse.php";
 
 class Database
 {

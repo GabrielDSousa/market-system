@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
-require __DIR__ . "/database/Database.php";
+require "database/Database.php";
 
 /**
  * Summary of DatabaseTest
@@ -21,7 +21,7 @@ final class DatabaseTest extends TestCase
     public function testClassConstructor()
     {
         // Load database configuration.
-        $config = require __DIR__ . "/config/database.php";
+        $config = require "config/database.php";
 
         // Create a database connection.
         $connection = new Database($config["database"]);
@@ -69,7 +69,7 @@ final class DatabaseTest extends TestCase
     public function testQuery()
     {
         // Load database configuration.
-        $config = require "config.php";
+        $config = require "config/database.php";
 
         // Create a database connection.
         $connection = new Database($config["database"]);
@@ -81,7 +81,7 @@ final class DatabaseTest extends TestCase
         );
 
         // check if the public schema exists
-        $exists = $connection->query("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'public'")->fetch();
+        $exists = $connection->query("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'public'")->findAllOrFail()[0];
 
         // check if the result is an array
         $this->assertIsArray($exists);

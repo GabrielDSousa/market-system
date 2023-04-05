@@ -6,7 +6,7 @@
 // The controller and method are separated by an @ symbol.
 
 // The UserController.php file defines the UserController class.
-require __DIR__ . "/controller/UserController.php";
+require "app/controllers/UserController.php";
 
 
 return [

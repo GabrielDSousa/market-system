@@ -6,7 +6,7 @@
 // response body of the API request.
 
 // The routes.php file defines the routes for the API.
-$routes = require __DIR__ . "/routes/routes.php";
+$routes = require "routes/routes.php";
 
 // Get the path from the URL. The path is everything after the domain name up to the query string.
 $path = parse_url($_SERVER["REQUEST_URI"])["path"];
