@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
 
-require_once 'Database.php';
+require "database/Database.php";
 
 /**
  * Summary of DatabaseTest
@@ -14,17 +14,17 @@ final class DatabaseTest extends TestCase
     /**
      * This test checks for an success Database object when the Database class is constructed 
      * with an valid array for the configuration. It uses the assertInstanceOf() method 
-     * to verify if a Database connection was returned. The test will fail if a connection isn't returned.
+     * to verify if a Database connection was returned. The test will fail if a connection isn"t returned.
      * 
      * @return void
      */
     public function testClassConstructor()
     {
         // Load database configuration.
-        $config = require 'config.php';
+        $config = require "config/database.php";
 
         // Create a database connection.
-        $connection = new Database($config['database']);
+        $connection = new Database($config["database"]);
 
         // Assert that the connection is an instance of the Database class.
         $this->assertInstanceOf(
@@ -45,12 +45,12 @@ final class DatabaseTest extends TestCase
     {
         $this->expectException(PDOException::class);
         new Database([
-            'driver' => 'pgsql',
-            'host' => 'localhost',
-            'port' => '543222',
-            'dbname' => 'market',
-            'user' => 'postgres',
-            'password' => 'postgres'
+            "driver" => "pgsql",
+            "host" => "localhost",
+            "port" => "543222",
+            "dbname" => "market",
+            "user" => "postgres",
+            "password" => "postgres"
         ]);
     }
 
@@ -69,10 +69,10 @@ final class DatabaseTest extends TestCase
     public function testQuery()
     {
         // Load database configuration.
-        $config = require 'config.php';
+        $config = require "config/database.php";
 
         // Create a database connection.
-        $connection = new Database($config['database']);
+        $connection = new Database($config["database"]);
 
         // Assert that the connection is an instance of the Database class.
         $this->assertInstanceOf(
@@ -81,15 +81,15 @@ final class DatabaseTest extends TestCase
         );
 
         // check if the public schema exists
-        $exists = $connection->query("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'public'")->fetch();
+        $exists = $connection->query("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'public'")->findAllOrFail()[0];
 
         // check if the result is an array
         $this->assertIsArray($exists);
 
         // check if the result array has the key "schema_name"
-        $this->assertArrayHasKey('schema_name', $exists);
+        $this->assertArrayHasKey("schema_name", $exists);
 
         // check if the result array has the value "public"
-        $this->assertEquals('public', $exists['schema_name']);
+        $this->assertEquals("public", $exists["schema_name"]);
     }
 }
