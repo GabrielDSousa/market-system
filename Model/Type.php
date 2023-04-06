@@ -72,7 +72,7 @@ class Type extends Model
     }
 
     /**
-     * @param string $name User name
+     * @param string $name
      * @return self
      */
     public function setName(string $name): self

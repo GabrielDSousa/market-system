@@ -16,3 +16,9 @@ $router->get("/type", "TypeController@show");
 $router->post("/type/store", "TypeController@store");
 $router->put("/type/update", "TypeController@update");
 $router->delete("/type/delete", "TypeController@delete");
+
+$router->get("/products", "ProductController@index");
+$router->get("/product", "ProductController@show");
+$router->post("/product/store", "ProductController@store");
+$router->put("/product/update", "ProductController@update");
+$router->delete("/product/delete", "ProductController@delete");
