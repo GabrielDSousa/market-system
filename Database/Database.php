@@ -1,6 +1,12 @@
 <?php
 
-require "app/requests/ApiResponse.php";
+namespace Database;
+
+use PDO;
+use PDOStatement;
+use PDOException;
+use Exception;
+use App\Requests\ApiResponse;
 
 class Database
 {

@@ -1,6 +1,11 @@
 <?php
-require "database/Database.php";
-require "app/helpers.php";
+
+namespace Model;
+
+use Database\Database;
+use Exception;
+use App\Requests\ApiResponse;
+use PDOException;
 
 /**
  * Summary of Model
@@ -66,13 +71,19 @@ abstract class Model
      */
     private string $ps;
 
+    /**
+     * The model ID
+     * @var ?int
+     */
+    protected ?int $id = null;
+
     public function __construct()
     {
         $this->attributes = !empty($this->visible) ? implode(", ", $this->visible) : "*";
         $this->fill = implode(",", $this->fillable);
         $this->ps = " :" . implode(", :", $this->fillable);
-        $this->config = require "config/database.php";
-        $this->db = new Database($this->config["database"]);
+        $this->config = config("database");
+        $this->db = new Database($this->config);
     }
 
     /**
@@ -196,5 +207,31 @@ abstract class Model
         } catch (Exception $e) {
             throw new Exception("Error deleting the record of {$this->table}", ApiResponse::INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function rules(): array
+    {
+        return $this->rules;
+    }
+
+    /**
+     * @param int $id
+     * @return self
+     */
+    public function setId(int $id): self
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->id;
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Requests;
+
 class ApiResponse
 {
     public const NOT_FOUND = 404;
