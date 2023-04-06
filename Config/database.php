@@ -1,4 +1,5 @@
 <?php
+
 // Database environment variables
 return [
     "database" => [

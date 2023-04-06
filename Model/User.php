@@ -1,5 +1,9 @@
 <?php
-require "model/Model.php";
+
+namespace Model;
+
+use Model\Model;
+
 
 /**
  * Summary of User
@@ -49,12 +53,6 @@ class User extends Model
     ];
 
     /**
-     * User ID
-     * @var ?int
-     */
-    private ?int $id;
-
-    /**
      * User name
      * @var ?string
      */
@@ -88,37 +86,11 @@ class User extends Model
         ?int $id = null
     ) {
         parent::__construct();
-        !empty($name) ?? $this->setName($name);
-        !empty($email) ?? $this->setEmail($email);
-        !empty($password) ?? $this->setPassword($password);
-        !empty($admin) ?? $this->setAdmin($admin);
-        !empty($id) ?? $this->id = $this->setId($id);
-    }
-
-    /**
-     * @return array
-     */
-    public function rules(): array
-    {
-        return $this->rules;
-    }
-
-    /**
-     * @param int $id User ID
-     * @return self
-     */
-    public function setId(int $id): self
-    {
-        $this->id = $id;
-        return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getId(): int
-    {
-        return $this->id;
+        !empty($name) ? $this->setName($name) : null;
+        !empty($email) ? $this->setEmail($email) : null;
+        !empty($password) ? $this->setPassword($password) : null;
+        !empty($admin) ? $this->setAdmin($admin) : null;
+        !empty($id) ? $this->id = $this->setId($id) : null;
     }
 
     /**

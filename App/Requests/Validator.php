@@ -1,5 +1,9 @@
 <?php
 
+namespace App\Requests;
+
+use Model\Model;
+
 /**
  * Summary of Validator
  */
@@ -35,6 +39,10 @@ class Validator
      */
     private array $data;
 
+    /**
+     * @param Model $model
+     * @param array $data
+     */
     public function __construct(Model $model, array $data)
     {
         $this->model = $model;
@@ -221,6 +229,28 @@ class Validator
             }
         }
     }
+    private function integer(string $key): void
+    {
+        // Check if the data key exists
+        if (isset($this->data[$key])) {
+            // Check if the data key is not equal to "true" or "false"
+            if (!is_int($this->data[$key])) {
+                // Set the error for the key
+                $this->errors[$key] = ["integer" => "The field {$key} must be an integer."];
+            }
+        }
+    }
+    private function float(string $key): void
+    {
+        // Check if the data key exists
+        if (isset($this->data[$key])) {
+            // Check if the data key is not equal to "true" or "false"
+            if (!is_float($this->data[$key])) {
+                // Set the error for the key
+                $this->errors[$key] = ["float" => "The field {$key} must be a float."];
+            }
+        }
+    }
 
     /**
      * Validate the data
@@ -249,6 +279,10 @@ class Validator
                     $this->boolean($key);
                 } else if ($rule == "string") {
                     $this->string($key);
+                } else if ($rule == "int") {
+                    $this->int($key);
+                } else if ($rule == "float") {
+                    $this->float($key);
                 }
             }
         }
@@ -265,6 +299,7 @@ class Validator
             $rules[$key] = explode("|", $rule);
             foreach ($rules[$key] as $rule) {
                 if ($rule == "string") {
+                    $this->validated[$key] = strip_tags($this->data[$key]);
                     $this->validated[$key] = htmlspecialchars($this->data[$key]);
                 } elseif ($rule == "int") {
                     $this->validated[$key] = filter_var($this->data[$key], FILTER_VALIDATE_INT);

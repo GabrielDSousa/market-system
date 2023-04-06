@@ -1,6 +1,12 @@
 <?php
-require "model/User.php";
-require "app/requests/Validator.php";
+
+namespace App\Controllers;
+
+use App\Requests\Validator;
+use App\Requests\ApiResponse;
+use Exception;
+use PDOException;
+use Model\User;
 
 /**
  * Summary of UserController
@@ -54,10 +60,14 @@ class UserController
     /**
      * This function creates a new user or update an existing user
      * 
-     * @param array $parameters
+     * @param string $name
+     * @param string $email
+     * @param string $password
+     * @param string $confirmation
+     * @param ?int $id
      * @return string
      */
-    public function store(string $name, string $email, string $password, string $confirmation, int $id = null): string
+    public function store(string $name, string $email, string $password, string $confirmation, ?int $id = null): string
     {
         //Validate the data
         $validator = new Validator($this->user, [
@@ -112,9 +122,12 @@ class UserController
     /**
      * Update a user
      *
+     * @param int $id
+     * @param ?string $name
+     * @param ?string $email
      * @return string
      */
-    public function update(int $id, string $name = null, string $email = null): string
+    public function update(int $id, ?string $name = null, ?string $email = null): string
     {
 
         // Get the user's data from the database
