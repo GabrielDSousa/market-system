@@ -32,7 +32,8 @@ php -S localhost:8080 -t Public
 
 ### Postman collection
 
-I've uploaded to the folder postman a exported JSON file with the routes that the api provide, it's simple and straightforward because of the time, but have all working routes are present.
+I've uploaded to the folder postman a exported JSON file with the routes that the api provide, it's simple and
+straightforward because of the time, but have all working routes are present.
 
 ### Lint with [ESLint](https://eslint.org/)
 
@@ -41,6 +42,22 @@ On project root
 ```sh
 npm run lint
 ```
+
+### Known issues
+
+Don't have a lot of time to work on this project, but I've found some issues that I would like to fix if I had more
+time.
+
+- Don't have a route for update user.
+- Don't have a route for delete user.
+- Don't have a route to make a user admin. Need to do it manually on database.
+
+### Good to know
+
+- There some parts at the front end that are only seen by the admin, like the admin page on profile menu.
+- The database already have a user with admin privileges, the email is: admin@gmail.com and the password is:
+  administrator.
+- I've taken seven days to do this project, but I've worked on it only on weekdays, so I've spent about 40 hours on it.
 
 # Routes
 
