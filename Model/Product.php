@@ -2,22 +2,11 @@
 
 namespace Model;
 
-use App\Requests\ApiResponse;
-use Model\Model;
-use Model\Type;
+use App\Requests\Request;
+use Exception;
 
-
-/**
- * Summary of User
- */
-class Product extends Model
+class Product extends Model implements ModelInterface
 {
-    /**
-     * Summary of table
-     * @var string
-     */
-    protected string $table = "products";
-
     /**
      * The array of model visible attributes.
      *
@@ -45,7 +34,7 @@ class Product extends Model
 
     /**
      * The rules to validate when adding a new User.
-     * 
+     *
      * @var array
      */
     protected array $rules = [
@@ -58,59 +47,60 @@ class Product extends Model
 
     /**
      * Product name
-     * @var ?string
+     * @var string
      */
-    private ?string $name;
+    protected string $name;
 
     /**
      * Product description
-     * @var ?string
+     * @var string
      */
-    private ?string $description;
+    protected string $description;
 
     /**
      * Product value
-     * @var ?int
+     * @var int
      */
-    private ?int $value;
+    protected int $value;
 
     /**
      * Product type id
-     * @var ?int
+     * @var int
      */
-    private ?int $type_id;
+    protected int $type_id;
 
     /**
      * Product type
      * @var Type
      */
-    private Type $type;
+    protected Type $type;
 
     /**
      * Product constructor.
-     * @param string|null $name
-     * @param string|null $description
-     * @param int|null $value
-     * @param int|null $type_id
-     * @param int|null $id
+     * @param string $name
+     * @param string $description
+     * @param int $value
+     * @param int $type_id
+     * @param int $id
+     * @throws Exception
      */
     public function __construct(
-        ?string $name = null,
-        ?string $description = null,
-        ?int $value = null,
-        ?int $type_id = null,
-        ?int $id = null
+        string $name = "",
+        string $description = "",
+        int $value = 0,
+        int $type_id = 0,
+        int $id = 0
     ) {
         parent::__construct();
-        !empty($name) ?? $this->setName($name);
-        !empty($description) ?? $this->setDescription($description);
-        !empty($value) ?? $this->setValue($value);
-        !empty($type_id) ?? $this->setTypeId($type_id);
-        !empty($id) ?? $this->id = $this->setId($id);
+        $this->setName($name);
+        $this->setDescription($description);
+        $this->setValue($value);
+        $this->setTypeId($type_id);
+        $this->setId($id);
     }
 
     /**
-     * @param string
+     * @param string $name
      * @return self
      */
     public function setName(string $name): self
@@ -129,15 +119,6 @@ class Product extends Model
 
     /**
      * Product description
-     * @return string|null
-     */
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    /**
-     * Product description
      * @param string|null $description Product description
      * @return self
      */
@@ -147,23 +128,46 @@ class Product extends Model
         return $this;
     }
 
+
+    /**
+     * Product description
+     * @return string|null
+     */
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
     /**
      * Product value
-     * @return int|null
+     * @param int $value Product value
+     * @return self
      */
-    public function getValue(): ?int
+    public function setValue(int $value): self
+    {
+        $this->value = $value;
+        return $this;
+    }
+
+    /**
+     * Product value
+     * @return int
+     */
+    public function getValue(): int
     {
         return $this->value;
     }
 
     /**
-     * Product value
-     * @param int|null $value Product value
+     * Product type id
+     * @param int $type_id Product type id
      * @return self
+     * @throws Exception
      */
-    public function setValue(?int $value): self
+    public function setTypeId(int $type_id): self
     {
-        $this->value = $value;
+        $this->type_id = $type_id;
+
         return $this;
     }
 
@@ -177,36 +181,20 @@ class Product extends Model
     }
 
     /**
-     * Product type id
-     * @param int|null $type_id Product type id
-     * @return self
-     */
-    public function setTypeId(?int $type_id): self
-    {
-        $this->type_id = $type_id;
-
-        $this->type = $this->getType();
-        if (empty($this->type)) {
-            throw new \Exception("Product type not found", ApiResponse::NOT_FOUND);
-        }
-
-        return $this;
-    }
-
-    /**
      * Product type
      * @return Type
+     * @throws Exception
      */
     public function getType(): Type
     {
         if (empty($this->type_id)) {
-            throw new \Exception("Product type id is empty", ApiResponse::NOT_FOUND);
+            throw new Exception("Product type id is empty", Request::NOT_FOUND);
         }
-        $parameters = (new Type())->get($this->type_id);
-        if (empty($parameters)) {
-            throw new \Exception("Product type doesn't exist", ApiResponse::NOT_FOUND);
+
+        if (empty($this->type)) {
+            $this->setType((new Type())->get($this->type_id));
         }
-        $this->type = new Type(extract($parameters));
+
         return $this->type;
     }
 
