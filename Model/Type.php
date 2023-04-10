@@ -2,20 +2,8 @@
 
 namespace Model;
 
-use Model\Model;
-
-
-/**
- * Summary of User
- */
 class Type extends Model
 {
-    /**
-     * Summary of table
-     * @var string
-     */
-    protected string $table = "types";
-
     /**
      * The array of model visible attributes.
      *
@@ -39,36 +27,36 @@ class Type extends Model
 
     /**
      * The rules to validate when adding a new User.
-     * 
+     *
      * @var array
      */
     protected array $rules = [
         "id" => "integer",
-        "name" => "required|string",
+        "name" => "required|string|unique:type,name",
         "tax" => "required|integer"
     ];
 
     /**
      * Type name
-     * @var ?string
+     * @var string
      */
-    private ?string $name;
+    protected string $name;
 
     /**
      * Type tax
-     * @var ?int
+     * @var int
      */
-    private ?int $tax;
+    protected int $tax;
 
     public function __construct(
-        ?string $name = null,
-        ?int $tax = null,
-        ?int $id = null
+        string $name = "",
+        int $tax = 0,
+        int $id = 0
     ) {
         parent::__construct();
-        !empty($name) ?? $this->setName($name);
-        !empty($tax) ?? $this->setTax($tax);
-        !empty($id) ?? $this->id = $this->setId($id);
+        $this->setName($name);
+        $this->setTax($tax);
+        $this->setId($id);
     }
 
     /**

@@ -2,20 +2,10 @@
 
 namespace Model;
 
-use Model\Model;
+use Exception;
 
-
-/**
- * Summary of User
- */
 class User extends Model
 {
-    /**
-     * Summary of table
-     * @var string
-     */
-    protected string $table = "user";
-
     /**
      * The array of model visible attributes.
      *
@@ -36,61 +26,60 @@ class User extends Model
     protected array $fillable = [
         "name",
         "email",
-        "password"
+        "password",
+        "admin"
     ];
 
     /**
      * The rules to validate when adding a new User.
-     * 
+     *
      * @var array
      */
     protected array $rules = [
         "id" => "integer",
         "name" => "required|string",
-        "email" => "required|email|unique:email",
+        "email" => "required|email|unique:user,email",
         "password" => "required|min:6|max:255|same:confirmation",
         "confirmation" => "required|min:6|max:255"
     ];
 
     /**
      * User name
-     * @var ?string
+     * @var string
      */
-    private ?string $name;
+    protected string $name;
 
     /**
      * User email
-     * @var ?string
+     * @var string
      */
-    private ?string $email;
+    protected string $email;
 
     /**
      * User password
-     * @var ?string
+     * @var string
      */
-    private ?string $password;
+    protected string $password;
 
     /**
      * Tells if the user is an admin
-     * @var ?bool
+     * @var bool
      */
-    private ?bool $admin;
-
+    protected bool $admin = false;
 
 
     public function __construct(
-        ?string $name = null,
-        ?string $email = null,
-        ?string $password = null,
-        ?bool $admin = false,
-        ?int $id = null
+        string $name = "",
+        string $email = "",
+        bool $admin = false,
+        int $id = 0
     ) {
         parent::__construct();
-        !empty($name) ? $this->setName($name) : null;
-        !empty($email) ? $this->setEmail($email) : null;
-        !empty($password) ? $this->setPassword($password) : null;
-        !empty($admin) ? $this->setAdmin($admin) : null;
-        !empty($id) ? $this->id = $this->setId($id) : null;
+        $this->setName($name);
+        $this->setEmail($email);
+        $this->setAdmin($admin);
+        $this->setId($id);
+        $this->password = "";
     }
 
     /**
@@ -131,7 +120,7 @@ class User extends Model
 
     /**
      * Hash and set password
-     * 
+     *
      * @param string $password User password
      * @return self
      */
@@ -145,11 +134,15 @@ class User extends Model
 
     /**
      * @return string
+     * @throws Exception
      */
     public function getPassword(): string
     {
-        if (isset($this->id) && empty($this->password)) {
-            $this->password = $this->db->query("SELECT password FROM public.user WHERE id = :id", [":id" => $this->getId()])->findOrFail()["password"];
+        if ($this->id !== 0 && empty($this->password)) {
+            $this->password = $this->db->query(
+                "SELECT password FROM public.users WHERE id = :id",
+                [":id" => $this->getId()]
+            )->findOrFail()["password"];
         }
 
         // Return the hashed password (for security reasons)
@@ -158,17 +151,19 @@ class User extends Model
 
     /**
      * Tells if the given password is the same as the user password
-     * 
+     *
+     * @param string $password
      * @return bool
+     * @throws Exception
      */
     public function verifyPassword(string $password): bool
     {
-        return password_verify($password, $this->password);
+        return password_verify($password, $this->getPassword());
     }
 
     /**
      * Tells if the user is an admin
-     * 
+     *
      * @return bool
      */
     public function isAdmin(): bool
@@ -183,6 +178,21 @@ class User extends Model
     public function setAdmin(bool $admin): self
     {
         $this->admin = $admin;
+        return $this;
+    }
+
+    /**
+     * Get user by email
+     *
+     * @param string $email User email
+     * @return self
+     * @throws Exception
+     */
+    public function getByEmail(string $email): self
+    {
+        $params = $this->getByColumn("email", $email)->findOrFail();
+        $this->setAttributes($params);
+
         return $this;
     }
 }
