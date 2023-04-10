@@ -3,15 +3,14 @@
 namespace App\Controllers;
 
 use App\Requests\Validator;
-use App\Requests\ApiResponse;
 use Exception;
-use PDOException;
+use Model\Token;
 use Model\User;
 
 /**
  * Summary of UserController
  */
-class UserController
+class UserController extends Controller
 {
     private User $user;
 
@@ -22,102 +21,116 @@ class UserController
 
     /**
      * This function fetches all users
-     * 
+     *
      * @return string A JSON array of objects string encoded with all users
+     * @throws Exception
      */
     public function index(): string
     {
         // Get the all users from the database or fail on error.
-        try {
-            $users = $this->user->all();
-        } catch (Exception $e) {
-            return ApiResponse::abort($e->getCode(), $e->getMessage());
-        }
+        $users = $this->user->all();
 
         // Return the users as a JSON array of objects, as a success.
-        return ApiResponse::success($users);
+        return self::success($users);
     }
 
     /**
      * Find a user by id
      *
      * @param int $id
-     * @return string A JSON object string encoded with an user
+     * @return string A JSON object string encoded with a user
+     * @throws Exception
      */
     public function show(int $id): string
     {
+        $this->checkToken($id);
+
         // Get the user from the database or fail if not found or on error.
-        try {
-            $user = $this->user->get($id);
-        } catch (Exception $e) {
-            return ApiResponse::abort($e->getCode(), $e->getMessage());
+        $user = $this->user->get($id);
+
+        $token = new Token();
+        $token = $token->getByToken(self::getBearerToken());
+
+        if ($token->getUserId() != $id) {
+            throw new Exception("You don't have permission to access this resource", self::UNAUTHORIZED);
         }
 
         // Return the user as a JSON object, as a success.
-        return ApiResponse::success($user);
+        return self::success($user->toArray());
     }
 
     /**
      * This function creates a new user or update an existing user
-     * 
+     *
      * @param string $name
      * @param string $email
      * @param string $password
      * @param string $confirmation
      * @param ?int $id
      * @return string
+     * @throws Exception
      */
-    public function store(string $name, string $email, string $password, string $confirmation, ?int $id = null): string
-    {
+    public function store(
+        string $name,
+        string $email,
+        string $password,
+        string $confirmation,
+        ?int $id = null
+    ): string {
         //Validate the data
-        $validator = new Validator($this->user, [
+        $validator = new Validator($this->user->getRules(), [
             "name" => $name,
             "email" => $email,
             "password" => $password,
-            "confirmation" => $confirmation
+            "confirmation" => $confirmation,
+            "id" => $id ?? null
         ]);
 
         //Check if the validation fails
         if ($validator->fails()) {
             //Abort the request with the error message
-            return ApiResponse::abort(ApiResponse::BAD_REQUEST, $validator->errors());
+            return self::abort($validator->errors(), self::BAD_REQUEST);
         }
 
-        try {
-            //Get the validated data
-            $safe = $validator->validated();
+        //Get the validated data
+        $safe = $validator->validated();
 
-            $action = "created";
-
-            $user = new User();
+        //Create a new User object
+        $user = new User();
+        if (!empty($safe['id'])) {
+            $user = $this->user->get($id);
+        }
+        if ($user->getName() !== $safe['name']) {
             $user->setName($safe["name"]);
-            $user->setEmail($safe["email"]);
-            if (empty($id)) {
-                $user->setPassword($safe["password"]);
-            } else {
-                $user->setId($id);
-                $action = "updated";
-            }
-
-            $message = "User {$action} successfully.";
-
-            //Save or update the user in the database, 
-            //sending the data as an array of parameters for the prepared statement
-            //and id if is an update
-            return ApiResponse::success($this->user->saveOrUpdate([
-                ":name" => $user->getName(),
-                ":email" => $user->getEmail(),
-                ":password" => $user->getPassword()
-            ], $id) . " " . $message);
-        } catch (Exception $e) {
-            //Abort the request with the error message
-            return ApiResponse::abort($e->getCode(), $e->getMessage());
-        } catch (PDOException $e) {
-            //Abort the request with the error message
-            return ApiResponse::abort($e->getCode(), $e->getMessage());
         }
-    }
+        if ($user->getEmail() !== $safe['email']) {
+            $user->setEmail($safe["email"]);
+        }
+        if (password_get_info($safe['password'])["algoName"] !== "bcrypt") {
+            $user->setPassword($safe["password"]);
+        }
 
+        $password = password_get_info(
+            $safe['password']
+        )["algoName"] === "bcrypt" ? $safe["password"] : $user->getPassword();
+
+        $this->user = $user->saveOrUpdate([
+            ":name" => $user->getName(),
+            ":email" => $user->getEmail(),
+            ":password" => $password,
+            ":admin" => $user->isAdmin() ? 1 : 0,
+        ]);
+
+        $this->user = $this->user->getByEmail($this->user->getEmail());
+
+        //Save or update the user in the database,
+        //sending the data as an array of parameters for the prepared statement
+        //and id if is an update
+        return self::success(
+            $this->user->toArray(),
+            self::CREATED
+        );
+    }
 
     /**
      * Update a user
@@ -126,41 +139,57 @@ class UserController
      * @param ?string $name
      * @param ?string $email
      * @return string
+     * @throws Exception
      */
-    public function update(int $id, ?string $name = null, ?string $email = null): string
+    public function update(int $id, ?string $name = null, ?string $email = null, ?string $password = null): string
     {
+        $this->checkToken($id);
 
         // Get the user's data from the database
-        $parameters = $this->user->get($id);
+        $user = $this->user->get($id);
 
-        // Set the User object's properties
-        $name = empty($name) ? $parameters["name"] : $name;
-        $email = empty($email) ? $parameters["email"] : $email;
+        // Set the Product object's properties
+        $name = empty($name) ? $user->getName() : $name;
+        $email = empty($email) ? $user->getEmail() : $email;
+
         $this->user->setId($id);
-        $password = $this->user->getPassword();
+        $this->user->setName($name);
+        $this->user->setEmail($email);
 
-        // Update the user in the database
-        return $this->store($name, $email, $password, $password, $id);
+        if (!empty($password)) {
+            $this->user->setPassword($password);
+        } else {
+            $this->user->setPassword($user->getPassword());
+        }
+
+        // Update the product in the database
+        return $this->store(
+            $this->user->getName(),
+            $this->user->getEmail(),
+            $this->user->getPassword(),
+            $this->user->getPassword(),
+            $this->user->getId(),
+        );
     }
 
     /**
      * Delete a user
-     * 
+     *
      * @param int $id
      * @return string
+     * @throws Exception
      */
     public function delete(int $id): string
     {
+        $this->checkToken($id);
+
+        // Get the user from the database or fail if not found or on error.
+        $user = $this->user->get($id);
+
         // Delete the user from the database
-        try {
-            //Look if the user exists
-            $this->user->get($id);
-            $this->user->delete($id);
-        } catch (Exception $e) {
-            return ApiResponse::abort($e->getCode(), $e->getMessage());
-        }
+        $user->delete();
 
         // Return a success message
-        return ApiResponse::success("User deleted");
+        return self::success("User deleted");
     }
 }
