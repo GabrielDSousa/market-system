@@ -17,9 +17,11 @@ require base_path("Routes/routes");
 
 // Get the result of the controller method call and echo it or show an error.
 try {
-    $result = $router->routeToController();
-    echo $result;
+    echo $router->routeToController();
 } catch (Exception $e) {
-    // If an exception is thrown, return a 500 response.
-    echo App\Requests\ApiResponse::abort($e->getCode(), $e->getMessage());
+    if (gettype($e->getCode()) !== "integer") {
+        echo App\Requests\Request::abort($e->getMessage(), 500);
+    } else {
+        echo App\Requests\Request::abort($e->getMessage(), $e->getCode());
+    }
 }

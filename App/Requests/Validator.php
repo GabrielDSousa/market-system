@@ -2,12 +2,14 @@
 
 namespace App\Requests;
 
+use Error;
+use Exception;
 use Model\Model;
 
 /**
  * Summary of Validator
  */
-class Validator
+class Validator extends Request
 {
     /**
      * Array of errors
@@ -22,35 +24,31 @@ class Validator
     private array $rules;
 
     /**
-     * Array of validated data 
+     * Array of validated data
      * @var array
      */
     private array $validated;
 
     /**
-     * Model
-     * @var Model
-     */
-    private Model $model;
-
-    /**
      * Array of data to validate
-     * @var array
+     * @var array|null
      */
-    private array $data;
+    private ?array $data;
 
     /**
-     * @param Model $model
      * @param array $data
+     * @param array $rules
+     * @throws Exception
      */
-    public function __construct(Model $model, array $data)
+    public function __construct(array $rules, array $data)
     {
-        $this->model = $model;
         $this->data = $data;
-        $this->rules = $this->model->rules();
+        $this->rules = $rules;
         $this->errors = [];
+        $this->validated = [];
         $this->validate();
     }
+
     /**
      * Check if the field is empty.
      *
@@ -62,7 +60,7 @@ class Validator
         // Check if the field exists in the form data
         if (!isset($this->data[$key]) || empty($this->data[$key])) {
             // Add an error to the error list
-            $this->errors[$key] = ["required" => "The field {$key} is required."];
+            $this->errors[$key] = ["required" => "The field $key is required."];
         }
     }
 
@@ -75,16 +73,17 @@ class Validator
     private function email(string $key): void
     {
         if (isset($this->data[$key]) && !filter_var($this->data[$key], FILTER_VALIDATE_EMAIL)) {
-            $this->errors[$key] = ["email" => "The field {$key} must be a valid email."];
+            $this->errors[$key] = ["email" => "The field $key must be a valid email."];
         }
     }
 
     /**
      * Checks if the field is unique given the column name.
-     * 
+     *
      * @param string $key
      * @param string $rule
      * @return void
+     * @throws Exception
      */
     private function unique(string $key, string $rule): void
     {
@@ -94,13 +93,26 @@ class Validator
         }
 
         // Get the column name from the rule.
-        $column = explode(":", $rule)[1];
+        [$model, $column] = explode(",", explode(":", $rule)[1]);
+        $model = ucfirst($model);
+        try {
+            $model = new ("Model\\$model");
+        } catch (Exception|Error $e) {
+            throw new Exception("The model $model does not exist.");
+        }
+
 
         // Get the value from the data.
         $value = $this->data[$key];
 
         // Check if the value is unique, passing in the id if it is an update.
-        $unique = $this->model->isUnique($column, $value, !empty($this->data["id"]));
+        /** @var Model $model */
+        $count = $model->getByColumn($column, $value)->rowCount();
+        $unique = $count == 0;
+
+        if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+            $unique = $count <= 1;
+        }
 
         // If the value is unique, return.
         if ($unique === true) {
@@ -108,61 +120,55 @@ class Validator
         }
 
         // If the value is not unique, but the check was successful, add an error.
-        if ($unique === false) {
-            $this->errors[$key] = ["unique" => "The field {$key} must be unique."];
-            return;
-        }
-
-        // If the value is not unique, but the check was not successful, add an error with the custom message.
-        $this->errors[$key] = ["unique" => $unique];
+        $this->errors[$key] = ["unique" => "The field $key must be unique."];
     }
 
     /**
      * Validate that the data has the minimum number of characters
-     * 
+     *
      * @param string $key
      * @param string $rule
-     * @throws Exception
      * @return void
+     * @throws Exception
      */
     private function min(string $key, string $rule): void
     {
         // Get the minimum number of characters from the rule
         $minLength = explode(":", $rule)[1];
         if (!is_numeric($minLength)) {
-            throw new \Exception("The minimum length must be a number");
+            throw new Exception("The minimum length must be a number");
         }
-        // If the data has less characters than the minimum, add an error
+        // If the data has fewer characters than the minimum, add an error
         if (isset($this->data[$key]) && strlen($this->data[$key]) < $minLength) {
-            $this->errors[$key] = ["min" => "The field {$key} must be at least {$minLength} characters."];
+            $this->errors[$key] = ["min" => "The field $key must be at least $minLength characters."];
         }
     }
 
     /**
      * Validate that the data has the maximum number of characters
-     * 
+     *
      * @param string $key
      * @param string $rule
      * @return void
+     * @throws Exception
      */
     private function max(string $key, string $rule): void
     {
         // Get the maximum number of characters from the rule
         $maxLength = explode(":", $rule)[1];
         if (!is_numeric($maxLength)) {
-            throw new \Exception("The maximum length must be a number");
+            throw new Exception("The maximum length must be a number");
         }
-        // If the data has less characters than the minimum, add an error
+        // If the data has fewer characters than the minimum, add an error
         if (isset($this->data[$key]) && strlen($this->data[$key]) > $maxLength) {
-            $this->errors[$key] = ["max" => "The field {$key} must be at least {$maxLength} characters."];
+            $this->errors[$key] = ["max" => "The field $key must be at least $maxLength characters."];
         }
     }
-
 
     /**
      * Validate if the value of the current field matches the value
      * of the field specified in the rule.
-     * 
+     *
      * @param string $key
      * @param string $rule
      * @return void
@@ -191,12 +197,12 @@ class Validator
         // If we got this far, it means the value of the current field does not match
         // the value of the field to check against, so we add an error to the errors
         // array
-        $this->errors[$key] = ["same" => "The field {$key} must be the same as {$same}."];
+        $this->errors[$key] = ["same" => "The field $key must be the same as $same."];
     }
 
     /**
      * Validate that the data is a string.
-     * 
+     *
      * @param string $key
      * @return void
      */
@@ -205,9 +211,9 @@ class Validator
         // Check if the key exists in the data
         if (isset($this->data[$key])) {
             // Check if the value of the key is not a string
-            if (!is_string($this->data[$key]) || is_numeric($this->data[$key])) {
+            if (!is_string($this->data[$key])) {
                 // Add an error message
-                $this->errors[$key] = ["string" => "The field {$key} must be a string."];
+                $this->errors[$key] = ["string" => "The field $key must be a string."];
             }
         }
     }
@@ -225,10 +231,11 @@ class Validator
             // Check if the data key is not equal to "true" or "false"
             if (!is_bool($this->data[$key])) {
                 // Set the error for the key
-                $this->errors[$key] = ["boolean" => "The field {$key} must be a boolean."];
+                $this->errors[$key] = ["boolean" => "The field $key must be a boolean."];
             }
         }
     }
+
     private function integer(string $key): void
     {
         // Check if the data key exists
@@ -236,10 +243,11 @@ class Validator
             // Check if the data key is not equal to "true" or "false"
             if (!is_int($this->data[$key])) {
                 // Set the error for the key
-                $this->errors[$key] = ["integer" => "The field {$key} must be an integer."];
+                $this->errors[$key] = ["integer" => "The field $key must be an integer."];
             }
         }
     }
+
     private function float(string $key): void
     {
         // Check if the data key exists
@@ -247,61 +255,72 @@ class Validator
             // Check if the data key is not equal to "true" or "false"
             if (!is_float($this->data[$key])) {
                 // Set the error for the key
-                $this->errors[$key] = ["float" => "The field {$key} must be a float."];
+                $this->errors[$key] = ["float" => "The field $key must be a float."];
             }
         }
     }
 
     /**
      * Validate the data
-     * 
+     *
      * @return void
+     * @throws Exception
      */
     private function validate(): void
     {
         //Loop through the rules and perform validation
-        foreach ($this->rules as $key => $rule) {
-            $rules[$key] = explode("|", $rule);
+        foreach ($this->rules as $key => $value) {
+            $rules[$key] = explode("|", $value);
             foreach ($rules[$key] as $rule) {
                 if ($rule == "required") {
                     $this->required($key);
-                } else if ($rule == "email") {
+                }
+                if ($rule == "email") {
                     $this->email($key);
-                } else if (str_contains($rule, "unique")) {
+                }
+                if (str_contains($rule, "unique")) {
                     $this->unique($key, $rule);
-                } else if (str_contains($rule, "min")) {
+                }
+                if (str_contains($rule, "min")) {
                     $this->min($key, $rule);
-                } else if (str_contains($rule, "max")) {
+                }
+                if (str_contains($rule, "max")) {
                     $this->max($key, $rule);
-                } else if (str_contains($rule, "same")) {
+                }
+                if (str_contains($rule, "same")) {
                     $this->same($key, $rule);
-                } else if ($rule == "boolean") {
+                }
+                if ($rule == "boolean") {
                     $this->boolean($key);
-                } else if ($rule == "string") {
+                }
+                if ($rule == "string") {
                     $this->string($key);
-                } else if ($rule == "int") {
-                    $this->int($key);
-                } else if ($rule == "float") {
+                }
+                if ($rule == "integer") {
+                    $this->integer($key);
+                }
+                if ($rule == "float") {
                     $this->float($key);
                 }
             }
         }
     }
 
+
     /**
      * Set the validated data, filtering it if necessary
-     * 
+     *
      * @return void
      */
     private function filter(): void
     {
-        foreach ($this->rules as $key => $rule) {
-            $rules[$key] = explode("|", $rule);
+        foreach ($this->rules as $key => $value) {
+            $rules[$key] = explode("|", $value);
             foreach ($rules[$key] as $rule) {
                 if ($rule == "string") {
                     $this->validated[$key] = strip_tags($this->data[$key]);
                     $this->validated[$key] = htmlspecialchars($this->data[$key]);
-                } elseif ($rule == "int") {
+                } elseif ($rule == "integer") {
                     $this->validated[$key] = filter_var($this->data[$key], FILTER_VALIDATE_INT);
                 } elseif ($rule == "float") {
                     $this->validated[$key] = filter_var($this->data[$key], FILTER_VALIDATE_FLOAT);
@@ -320,7 +339,7 @@ class Validator
 
     /**
      * Returns true if there are any errors in the errors array, otherwise returns false
-     * 
+     *
      * @return bool
      */
     public function fails(): bool
