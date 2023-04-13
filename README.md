@@ -30,6 +30,15 @@ On folder api
 php -S localhost:8080 -t Public
 ```
 
+Copy the .env.example file to .env and fill in the values for the chosen host address.
+```sh
+cp .env.example .env
+```
+
+### Database configuration
+A config database file is provided in the api folder, in the Config folder,
+you can change the database configuration there, if you want to use another database.
+
 ### Postman collection
 
 I've uploaded to the folder postman a exported JSON file with the routes that the api provide, it's simple and

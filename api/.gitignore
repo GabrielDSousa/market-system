@@ -1,4 +1,0 @@
-*.log
-.vscode
-/vendor
-*.lock
