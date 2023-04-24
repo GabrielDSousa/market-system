@@ -97,7 +97,7 @@ class Router extends Request
         $method = $this->routes[$this->httpMethod][$this->path]["method"];
 
         if (class_exists($controller)) {
-            $controller_instance = new $controller;
+            $controller_instance = new $controller();
             if (method_exists($controller_instance, $method)) {
                 return call_user_func_array([$controller_instance, $method], $this->parameters);
             } else {
@@ -123,7 +123,7 @@ class Router extends Request
         }
 
         try {
-            (new $middleware)->handle($bearer);
+            (new $middleware())->handle($bearer);
         } catch (TypeError $e) {
             if (str_contains($e->getMessage(), '($bearer) must be of type string, null given')) {
                 throw new Exception("Token not found", self::UNAUTHORIZED);

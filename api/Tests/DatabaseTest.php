@@ -3,11 +3,14 @@
 declare(strict_types=1);
 
 
+namespace Tests;
+
+use Database\Database;
+use Exception;
+use PDOException;
 use PHPUnit\Framework\TestCase;
 
 require "/home/gabs/projects/market-system/Database/Database.php";
-
-use Database\Database;
 
 /**
  * Summary of DatabaseTest
@@ -99,7 +102,9 @@ final class DatabaseTest extends TestCase
         );
 
         // check if the public schema exists
-        $exists = $this->connection->query("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'public'")->findAllOrFail()[0];
+        $exists = $this->connection->query(
+            "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'public'"
+        )->findAllOrFail()[0];
 
         // check if the result is an array
         $this->assertIsArray($exists);

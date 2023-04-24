@@ -52,7 +52,7 @@ function prepareToDelete(product) {
           <td class="sm:p-3 py-2 px-1 border-b border-gray-200 dark:border-gray-800">
             <div class="flex items-center">{{ product.name }}</div>
           </td>
-          <td class="sm:p-3 py-2 px-1 border-b border-gray-200 dark:border-gray-800">
+          <td class="sm:p-3 w-2/5 py-2 px-1 border-b border-gray-200 dark:border-gray-800">
             <div class="flex items-center">
               {{ product.description }}
             </div>

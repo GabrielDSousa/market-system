@@ -96,8 +96,8 @@ class Validator extends Request
         [$model, $column] = explode(",", explode(":", $rule)[1]);
         $model = ucfirst($model);
         try {
-            $model = new ("Model\\$model");
-        } catch (Exception|Error $e) {
+            $model = new ("Model\\$model")();
+        } catch (Exception|Error) {
             throw new Exception("The model $model does not exist.");
         }
 

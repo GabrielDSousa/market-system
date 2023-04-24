@@ -138,6 +138,7 @@ class UserController extends Controller
      * @param int $id
      * @param ?string $name
      * @param ?string $email
+     * @param string|null $password
      * @return string
      * @throws Exception
      */

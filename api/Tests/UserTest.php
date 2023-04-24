@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+namespace Tests;
+
+use Model;
 use PHPUnit\Framework\TestCase;
 
 /**

@@ -151,13 +151,14 @@ function toggleBag() {
             <div class="text-base font-medium leading-none text-white">{{ user.name }}</div>
             <div class="text-sm font-medium leading-none text-gray-400">{{ user.email }}</div>
           </div>
-          <button
-            class="ml-auto flex-shrink-0 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
-            type="button"
-          >
-            <span class="sr-only">View notifications</span>
-            <BellIcon aria-hidden="true" class="h-6 w-6" />
-          </button>
+            <button
+                    class="ml-auto flex-shrink-0 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
+                    type="button"
+                    @click="toggleBag"
+            >
+                <span class="sr-only">View shopping bag</span>
+                <ShoppingBagIcon aria-hidden="true" class="h-6 w-6" />
+            </button>
         </div>
         <div class="mt-3 space-y-1 px-2">
           <DisclosureButton

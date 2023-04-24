@@ -37,22 +37,18 @@ abstract class Request
         //Check whether the Authorization header is set.
         if (isset($_SERVER['Authorization'])) {
             $headers = trim($_SERVER["Authorization"]);
-        } else {
-            if (isset($_SERVER['HTTP_AUTHORIZATION'])) { //Nginx or fast CGI
-                $headers = trim($_SERVER["HTTP_AUTHORIZATION"]);
-            } else {
-                if (function_exists('apache_request_headers')) {
-                    //If it isn't, try to get it from the other sources.
-                    $requestHeaders = apache_request_headers();
-                    // Server-side fix for bug in old Android versions (a nice side effect of this fix means we don't care about capitalization for Authorization)
-                    $requestHeaders = array_combine(
-                        array_map('ucwords', array_keys($requestHeaders)),
-                        array_values($requestHeaders)
-                    );
-                    if (isset($requestHeaders['Authorization'])) {
-                        $headers = trim($requestHeaders['Authorization']);
-                    }
-                }
+        } elseif (isset($_SERVER['HTTP_AUTHORIZATION'])) { //Nginx or fast CGI
+            $headers = trim($_SERVER["HTTP_AUTHORIZATION"]);
+        } elseif (function_exists('apache_request_headers')) {
+            //If it isn't, try to get it from the other sources.
+            $requestHeaders = apache_request_headers();
+            // Server-side fix for bug in old Android versions (a nice side effect of this fix means we don't care about capitalization for Authorization)
+            $requestHeaders = array_combine(
+                array_map('ucwords', array_keys($requestHeaders)),
+                array_values($requestHeaders)
+            );
+            if (isset($requestHeaders['Authorization'])) {
+                $headers = trim($requestHeaders['Authorization']);
             }
         }
         return $headers;
@@ -101,7 +97,7 @@ abstract class Request
      * @param mixed $data The data to be displayed in the response
      * @return string The JSON response
      */
-    protected static function success(mixed $data, int $code = self::OK): string
+    public static function success(mixed $data, int $code = self::OK): string
     {
         return self::json($data, $code);
     }

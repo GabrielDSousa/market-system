@@ -14,6 +14,7 @@ dist-ssr
 coverage
 *.local
 /api/vendor
+.env
 
 /cypress/videos/
 /cypress/screenshots/
